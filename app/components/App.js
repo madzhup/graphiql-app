@@ -11,6 +11,16 @@ Modal.setAppElement(document.getElementById('react-root'));
 
 import HTTPHeaderEditor from './HTTPHeaderEditor';
 
+const encodeValues = (values) => {
+  const params = Object.keys(values).map((key) => {
+    let value = values[key];
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      value = JSON.stringify(value);
+    }
+    return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+  }).join('&');
+  return params;
+};
 
 export default class App extends React.Component {
   constructor() {
@@ -26,7 +36,8 @@ export default class App extends React.Component {
           name: null,
           headers: {},
           endpoint: '',
-          method: 'post'
+          method: 'post',
+          encode: true
         }
       ]
     };
@@ -75,7 +86,8 @@ export default class App extends React.Component {
         uuid: uuid.v1(),
         headers: currentTab.headers,
         endpoint: currentTab.endpoint,
-        method: currentTab.method
+        method: currentTab.method,
+        encode: currentTab.encode
       }],
       currentTabIndex: newTabIndex
     }, () => {
@@ -103,7 +115,8 @@ export default class App extends React.Component {
           uuid: uuid.v1(),
           headers: {},
           endpoint: '',
-          method: 'post'
+          method: 'post',
+          encode: true,
         }
       ];
     }
@@ -154,7 +167,11 @@ export default class App extends React.Component {
       'Content-Type': 'application/json'
     };
 
-    const { endpoint, method, headers } = this.getCurrentTab();
+    const { endpoint, method, encode, headers } = this.getCurrentTab();
+
+    if (!endpoint) {
+      return Promise.resolve({});
+    }
 
     if (method == "get") {
       var url = endpoint;
@@ -175,13 +192,15 @@ export default class App extends React.Component {
       method: method,
       credentials: 'include',
       headers: Object.assign({}, defaultHeaders, headers),
-      body: JSON.stringify(graphQLParams)
+      body: encode ? encodeValues(graphQLParams) : JSON.stringify(graphQLParams),
     }).then(response => response.json());
   }
 
   handleChange(field, eOrKey, e) {
     if (typeof eOrKey === 'number') {
       this.updateFieldForTab(eOrKey, field, e.target.value);
+    } else if (field === 'encode') {
+      this.updateFieldForTab(this.state.currentTabIndex, field, eOrKey.target.checked);
     } else {
       this.updateFieldForTab(this.state.currentTabIndex, field, eOrKey.target.value);
     }
@@ -259,13 +278,20 @@ export default class App extends React.Component {
 
               <a href="javascript:;" className="pure-button pure-button-primary edit-headers-button" onClick={this.openHeaderEdit}>Edit HTTP Headers</a>
 
-              <div className="pure-control-group" style={{float: 'right'}}>
-                <label htmlFor="method">Method</label>
-
-                <select name="method" value={currentTab.method} onChange={this.handleChange.bind(this, 'method')}>
-                  <option value="get">GET</option>
-                  <option value="post">POST</option>
-                </select>
+              <div className="pure-control-group" style={{display: 'inline-block'}}>
+                <div className="pure-control-group" style={{display: 'inline-block'}}>
+                  <label htmlFor="method">Method</label>
+                  <select name="method" value={currentTab.method} onChange={this.handleChange.bind(this, 'method')}>
+                    <option value="get">GET</option>
+                    <option value="post">POST</option>
+                  </select>
+                </div>
+                <div className="pure-control-group" style={{display: 'inline-block'}}>
+                  <label htmlFor="encode">Encode</label>
+                  { currentTab.method === 'post' &&
+                    <input type="checkbox" name="encode" checked={currentTab.encode} value={currentTab.encode} onChange={this.handleChange.bind(this, 'encode')} />
+                  }
+                </div>
               </div>
             </div>
           </div>
@@ -275,7 +301,7 @@ export default class App extends React.Component {
             // THIS IS THE GROSSEST THING I'VE EVER DONE AND I HATE IT. FIXME ASAP
           }
           <GraphiQL
-            key={currentTabIndex + currentTab.endpoint + JSON.stringify(currentTab.headers)}
+            key={currentTabIndex + currentTab.endpoint + currentTab.endpoint + JSON.stringify(currentTab.headers)}
             storage={getStorage(`graphiql:${currentTab.uuid}`)}
             fetcher={this.graphQLFetcher} />
         </div>
