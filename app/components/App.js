@@ -181,7 +181,7 @@ export default class App extends React.Component {
 
       url += url.indexOf('?') == -1 ? "?" : "&";
 
-      return fetch(url + "query=" + encodeURIComponent(graphQLParams['query']) + "&variables=" + encodeURIComponent(graphQLParams['variables']), {
+      return fetch(url + "query=" + encodeURIComponent(graphQLParams['query']) + "&variables=" + encodeURIComponent(JSON.stringify(graphQLParams['variables'])), {
         method: method,
         credentials: 'include',
         headers: Object.assign({}, defaultHeaders, headers),
@@ -352,7 +352,8 @@ const _storages = {};
 function _makeStorage(storageKey) {
   return {
     setItem: (key, val) => window.localStorage.setItem(`${storageKey}${key}`, val),
-    getItem: (key) => window.localStorage.getItem(`${storageKey}${key}`)
+    getItem: (key) => window.localStorage.getItem(`${storageKey}${key}`),
+    removeItem: (key) => window.localStorage.removeItem(`${storageKey}${key}`)
   };
 }
 

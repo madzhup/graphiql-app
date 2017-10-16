@@ -3,6 +3,7 @@ var app = electron.app;
 var BrowserWindow = electron.BrowserWindow;
 var Menu = electron.Menu;
 var crashReporter = electron.crashReporter;
+const shell = electron.shell;
 var menu, template;
 
 crashReporter.start({
@@ -22,6 +23,11 @@ app.on('window-all-closed', function() {
 app.on('ready', function() {
 
   mainWindow = new BrowserWindow({ width: 1024, height: 728 });
+
+  electron.session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders['Origin'] = 'electron://graphiql-app';
+    callback({ cancel: false, requestHeaders: details.requestHeaders });
+  });
 
   if (process.env.HOT) {
     mainWindow.loadURL('file://' + __dirname + '/app/hot-dev-app.html');
@@ -158,22 +164,22 @@ app.on('ready', function() {
       submenu: [{
         label: 'Learn More',
         click: function() {
-          require('shell').openExternal('http://electron.atom.io');
+          shell.openExternal('http://electron.atom.io');
         }
       }, {
         label: 'Documentation',
         click: function() {
-          require('shell').openExternal('https://github.com/atom/electron/tree/master/docs#readme');
+          shell.openExternal('https://github.com/atom/electron/tree/master/docs#readme');
         }
       }, {
         label: 'Community Discussions',
         click: function() {
-          require('shell').openExternal('https://discuss.atom.io/c/electron');
+          shell.openExternal('https://discuss.atom.io/c/electron');
         }
       }, {
         label: 'Search Issues',
         click: function() {
-          require('shell').openExternal('https://github.com/atom/electron/issues');
+          shell.openExternal('https://github.com/atom/electron/issues');
         }
       }]
     }];
@@ -188,6 +194,12 @@ app.on('ready', function() {
         accelerator: 'Ctrl+N',
         click: function() {
           mainWindow.webContents.send('handleElectronMenuOption', 'NEW_TAB');
+        }
+      }, {
+        label: 'Close Query',
+        accelerator: 'Ctrl+W',
+        click: function() {
+          mainWindow.webContents.send('handleElectronMenuOption', 'CLOSE_TAB');
         }
       }]
     }, {
@@ -216,22 +228,22 @@ app.on('ready', function() {
       submenu: [{
         label: 'Learn More',
         click: function() {
-          require('shell').openExternal('http://electron.atom.io');
+          shell.openExternal('http://electron.atom.io');
         }
       }, {
         label: 'Documentation',
         click: function() {
-          require('shell').openExternal('https://github.com/atom/electron/tree/master/docs#readme');
+          shell.openExternal('https://github.com/atom/electron/tree/master/docs#readme');
         }
       }, {
         label: 'Community Discussions',
         click: function() {
-          require('shell').openExternal('https://discuss.atom.io/c/electron');
+          shell.openExternal('https://discuss.atom.io/c/electron');
         }
       }, {
         label: 'Search Issues',
         click: function() {
-          require('shell').openExternal('https://github.com/atom/electron/issues');
+          shell.openExternal('https://github.com/atom/electron/issues');
         }
       }]
     }];
